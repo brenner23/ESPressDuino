@@ -23,7 +23,7 @@ A **Duino-Coin miner for ESP32 display boards**, with the web dashboard and the 
 | **CYD** ESP32-2432S028 (2 USB ports) | ST7789 320×240, touch, light sensor | ✅ version 5.0, tested (~190 kH/s, 2 cores) |
 | **NM-TV-154** (NerdMiner TV) | ST7789 240×240, touch pad | ✅ version 5.0, tested (~190 kH/s, 2 cores) |
 | **ESP32 without display** (DevKit, USB-C / Micro-USB) | – (blue LED: on = mining, blinking = setup portal) | ✅ version 5.0, tested (~190 kH/s, 2 cores), also on chip **revision 1.0** |
-| MiniTV ESP32-C2 | ST7789 240×240, single core | 🔧 being merged in (was `duinocoin-WeatheTV-ESP32-C2`) |
+| **MiniTV ESP32-C2** | ST7789 240×240, single core, 120 MHz | ✅ version 5.0, tested (~48 kH/s – the old firmware reached ~40) |
 
 ## Features
 
@@ -38,7 +38,7 @@ A **Duino-Coin miner for ESP32 display boards**, with the web dashboard and the 
 - **Wallet view** like the official wallet page: balance, USD value, devices/threads/total hashrate and one row per
   device (all cores of a device are grouped, e.g. `CYD47-Test • 2 threads`), link to the public wallet page
 - **Display settings** in the browser: brightness (live preview), auto light (light sensor), rotation 0/90/180/270°
-- **BOOT button 5 s** (NM-TV: touch pad 10 s) → setup portal opens (settings are kept, mining continues)
+- **BOOT button 5 s** (NM-TV: touch pad 10 s; MiniTV C2: none – portal on Wi-Fi loss/first start) → setup portal opens (settings are kept, mining continues)
 - **Wi-Fi watchdog:** reconnects automatically, restarts after 5 min without Wi-Fi
 - Optional: everything from `secrets.ini` instead of the portal (see below)
 - Only **free fonts** (Archivo Narrow Bold, SIL OFL 1.1), licence files in `include/Fonts/`
@@ -92,8 +92,15 @@ into the repository. Without `secrets.ini` (or with `use_secrets = 0`) the porta
 ## Build & flash (VS Code + PlatformIO)
 
 1. Open the folder in VS Code with PlatformIO.
-2. Choose the environment (`cyd_usb`) and click **→ Upload**.
+2. Choose the environment (`cyd_usb`, `nmtv_usb`, `esp32_usb` or `c2_usb`) and click **→ Upload**.
 3. Serial monitor: 500000 baud.
+
+### Updates over Wi-Fi (OTA)
+
+Every board has an `*_ota` environment (`cyd_ota`, `nmtv_ota`, `esp32_ota`, `c2_ota`). Put the **IP address of your
+device** (shown in the dashboard under Wi-Fi and on the serial console at boot) and an optional OTA password into
+`secrets.ini` (`ota_ip_cyd`, `ota_ip_nmtv`, `ota_ip_esp32`, `ota_ip_c2`, `ota_pass`), then upload with that environment.
+The default address `192.168.0.100` is only a placeholder – **change it**.
 
 There are intentionally no prebuilt firmware files: you flash what you can read in the source.
 

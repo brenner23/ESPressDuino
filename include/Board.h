@@ -47,7 +47,7 @@
   #define ED_FIXED_ROTATION  2
   #define ED_TFT_INVERT_OFF  0
   #define ED_TFT_SPI_MODE    SPI_MODE3  // CS liegt fest auf GND
-  #define ED_BOOT_PIN        9
+  #define ED_BOOT_PIN        -1    // kein BOOT-Knopf erreichbar: Portal nur bei WLAN-Ausfall/Erststart
 #else
   #ifndef BOARD_CYD
     #define BOARD_CYD

@@ -1003,9 +1003,9 @@ namespace {
             JsonDocument d;
             d["board"]       = ED_BOARD;
             d["brightness"]  = nm_brightness_percent;
-            d["hasLdr"]      = true;
+            d["hasLdr"]      = ED_HAS_LDR ? true : false;
             d["autoLight"]   = nm_auto_brightness;
-            d["hasRotation"] = true;
+            d["hasRotation"] = ED_HAS_ROTATION ? true : false;
             d["rotation"]    = nm_rotation_degrees;
             d["status"]      = nm_auto_brightness ? String("Auto light on · display now ") + nm_ldr_output_percent + " %" : String("");
             ed_send_json(d);
@@ -1085,10 +1085,10 @@ namespace {
             static bool init = false;
             static unsigned long bootSince = 0;
             static int lastShown = -1;
-            if (!init) { pinMode(ED_BOOT_PIN, INPUT_PULLUP); init = true; }
+            if (!init) { if (ED_BOOT_PIN >= 0) pinMode(ED_BOOT_PIN, INPUT_PULLUP); init = true; }
             if (ed_portal) return;
             const unsigned long now = millis();
-            if (digitalRead(ED_BOOT_PIN) == LOW) { if (!bootSince) bootSince = now; } else bootSince = 0;
+            if (ED_BOOT_PIN >= 0 && digitalRead(ED_BOOT_PIN) == LOW) { if (!bootSince) bootSince = now; } else bootSince = 0;
 
             int remain = -1, shownFrom = 1;   // Sekunden bis zum Portal, -1 = nichts gehalten
             if (bootSince) remain = 5 - (int)((now - bootSince) / 1000UL);
@@ -1168,6 +1168,38 @@ namespace {
     #endif
 
 } // End of namespace
+
+// Ein Kern (ESP32-C2): Der Mining-Job ruft das alle ~100 ms auf, damit Webseite, OTA,
+// Uhr, Wallet, BOOT-Knopf und WLAN-Waechter auch waehrend des Rechnens laufen.
+// Bei zwei Kernen erledigt das system_events_func() auf Kern 0.
+void ed_background_events() {
+  static bool busy = false;
+  if (busy) return;   // keine Verschachtelung (z. B. Wallet-Abruf ruft yield/delay)
+  busy = true;
+  ArduinoOTA.handle();
+  #if defined(WEB_DASHBOARD)
+    ed_web_service();
+    ed_history_tick();
+    ed_boot_button_tick();
+  #endif
+  #if defined(DISPLAY_CYD)
+    nm_temp_update();
+    update_display_clock();
+    const unsigned long walletNow = millis();
+    if (walletNow - nm_wallet_last_attempt >= nm_wallet_interval_seconds * 1000UL) {
+      nm_wallet_last_attempt = walletNow;
+      update_wallet_data();
+    }
+  #endif
+  {
+    static unsigned long edLastAlt = millis();
+    if (g_ed.poolAltMin && ed_has_pool2() && millis() - edLastAlt >= g_ed.poolAltMin * 60000UL) {
+      edLastAlt = millis();
+      ed_switch_pool();
+    }
+  }
+  busy = false;
+}
 
 MiningJob *job[CORE];
 

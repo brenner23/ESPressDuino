@@ -23,7 +23,7 @@ Ein **Duino-Coin-Miner für ESP32-Displays**, mit dem Web-Dashboard und dem Einr
 | **CYD** ESP32-2432S028 (2 USB-Buchsen) | ST7789 320×240, Touch, Lichtsensor | ✅ Version 5.0, getestet (~190 kH/s, 2 Kerne) |
 | **NM-TV-154** (NerdMiner TV) | ST7789 240×240, Touchfläche | ✅ Version 5.0, getestet (~190 kH/s, 2 Kerne) |
 | **ESP32 ohne Display** (DevKit, USB-C / Micro-USB) | – (blaue LED: an = mint, blinkt = Einrichtungs-Portal) | ✅ Version 5.0, getestet (~190 kH/s, 2 Kerne), auch auf Chip-**Revision 1.0** |
-| MiniTV ESP32-C2 | ST7789 240×240, ein Kern | 🔧 wird eingebaut (bisher `duinocoin-WeatheTV-ESP32-C2`) |
+| **MiniTV ESP32-C2** | ST7789 240×240, ein Kern, 120 MHz | ✅ Version 5.0, getestet (~48 kH/s – die alte Firmware kam auf ~40) |
 
 ## Funktionen
 
@@ -38,7 +38,7 @@ Ein **Duino-Coin-Miner für ESP32-Displays**, mit dem Web-Dashboard und dem Einr
 - **Wallet-Ansicht** wie die offizielle Wallet-Seite: Guthaben, USD-Wert, Geräte/Threads/Gesamt-Hashrate und eine Zeile
   pro Gerät (alle Kerne eines Geräts zusammengefasst, z. B. `CYD47-Test • 2 threads`), Link zur öffentlichen Wallet-Seite
 - **Display-Einstellungen** im Browser: Helligkeit (Live-Vorschau), Auto-Licht (Lichtsensor), Drehung 0/90/180/270°
-- **BOOT-Knopf 5 s halten** (NM-TV: Touchfläche 10 s) → Einrichtungs-Portal öffnet sich (Einstellungen bleiben, Miner läuft weiter)
+- **BOOT-Knopf 5 s halten** (NM-TV: Touchfläche 10 s; MiniTV C2: keiner – Portal bei WLAN-Ausfall/Erststart) → Einrichtungs-Portal öffnet sich (Einstellungen bleiben, Miner läuft weiter)
 - **WLAN-Wächter:** verbindet sich selbst neu, Neustart nach 5 min ohne WLAN
 - Wahlweise: alles aus `secrets.ini` statt Portal (siehe unten)
 - Nur **freie Schriften** (Archivo Narrow Bold, SIL OFL 1.1), Lizenztexte in `include/Fonts/`
@@ -93,8 +93,15 @@ In `secrets.ini` stehen außerdem das **OTA-Passwort** und die IP-Adresse für d
 ## Bauen & flashen (VS Code + PlatformIO)
 
 1. Ordner in VS Code mit PlatformIO öffnen.
-2. Umgebung wählen (`cyd_usb`) und **→ Upload** klicken.
+2. Umgebung wählen (`cyd_usb`, `nmtv_usb`, `esp32_usb` oder `c2_usb`) und **→ Upload** klicken.
 3. Serieller Monitor: 500000 Baud.
+
+### Updates per WLAN (OTA)
+
+Jedes Gerät hat eine `*_ota`-Umgebung (`cyd_ota`, `nmtv_ota`, `esp32_ota`, `c2_ota`). Die **IP-Adresse deines Geräts**
+(steht im Dashboard unter Wi-Fi und auf der seriellen Konsole beim Start) und optional ein OTA-Passwort in `secrets.ini`
+eintragen (`ota_ip_cyd`, `ota_ip_nmtv`, `ota_ip_esp32`, `ota_ip_c2`, `ota_pass`), dann mit dieser Umgebung hochladen.
+Die Standardadresse `192.168.0.100` ist nur ein Platzhalter – **unbedingt anpassen**.
 
 Es gibt bewusst keine fertigen Firmware-Dateien: Geflasht wird, was man im Quellcode lesen kann.
 

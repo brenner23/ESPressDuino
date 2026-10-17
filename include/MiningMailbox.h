@@ -4,6 +4,13 @@
 #include <Arduino.h>
 #include "Settings.h"
 
+// Ereignisse der Mining-Tasks (ein Kern: direkt gezaehlt, zwei Kerne: ueber den Briefkasten)
+enum NmMiningEventType : uint8_t {
+    NM_EVT_SHARE_FOUND = 1,
+    NM_EVT_ACCEPTED    = 2,
+    NM_EVT_REJECTED    = 3
+};
+
 #if defined(ESP32) && !defined(CONFIG_FREERTOS_UNICORE)
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
@@ -15,11 +22,6 @@
 // gleichzeitig auf share_count / accepted_share_count / rejected_share_count.
 #define NM_MINING_MAILBOX_DEPTH 8
 
-enum NmMiningEventType : uint8_t {
-    NM_EVT_SHARE_FOUND = 1,
-    NM_EVT_ACCEPTED    = 2,
-    NM_EVT_REJECTED    = 3
-};
 
 struct NmMiningEvent {
     uint8_t type;
@@ -87,8 +89,19 @@ static inline uint32_t nm_mining_mailbox_dropped(uint8_t core) {
 }
 
 #else
+// Ein Kern (z. B. ESP32-C2): kein gleichzeitiger Zugriff moeglich, Zaehler direkt erhoehen.
 static inline void nm_mining_mailbox_begin() {}
-static inline void nm_mining_signal(uint8_t, uint8_t) {}
+static inline void nm_mining_signal(uint8_t, uint8_t type) {
+    switch (type) {
+        case NM_EVT_SHARE_FOUND: share_count++; break;
+        case NM_EVT_ACCEPTED:    accepted_share_count++; break;
+        case NM_EVT_REJECTED:    rejected_share_count++; break;
+        default: break;
+    }
+    if (share_count > 9999999UL || accepted_share_count > 9999999UL || rejected_share_count > 9999999UL) {
+        share_count = 0; accepted_share_count = 0; rejected_share_count = 0;
+    }
+}
 #endif
 
 #endif

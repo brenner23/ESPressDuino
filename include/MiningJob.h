@@ -15,6 +15,9 @@
 #include "CrashLog.h"
 #include "CollisionGuard.h"
 #include "EdSettings.h"
+
+// Hintergrundarbeiten fuer Geraete mit einem Kern (definiert in main.cpp)
+void ed_background_events();
 #include "MiningMailbox.h"
 
 // https://github.com/esp8266/Arduino/blob/master/cores/esp8266/TypeConversion.cpp
@@ -98,6 +101,10 @@ struct MiningConfig {
     #if defined(ESP8266)
         // "High-band" 8266 diff
         String START_DIFF = "ESP8266H";
+    #elif defined(CONFIG_IDF_TARGET_ESP32C2)
+        // ESP32-C2 (RISC-V, ein Kern, 120 MHz): mit "ESP32S" lehnt der Node die ersten
+        // Shares ab ("Too high starting difficulty") - wie im bisherigen C2-Projekt.
+        String START_DIFF = "ESP8266H";
     #elif defined(CONFIG_FREERTOS_UNICORE)
         // Single core 32 diff
         String START_DIFF = "ESP32S";
@@ -154,6 +161,9 @@ public:
     void handleSystemEvents(void) {
         #if defined(ESP32) && CORE == 2
           esp_task_wdt_reset();
+        #endif
+        #if defined(CONFIG_FREERTOS_UNICORE)
+          ed_background_events();   // ein Kern: Web, OTA, Uhr, Wallet auch waehrend des Rechnens
         #endif
         delay(1); // Minimal delay - füttert den RTOS Watchdog ohne viel Zeit zu verlieren
                   // delay(10) war vorher hier = 10% Verlust, delay(1) = nur ~1%
